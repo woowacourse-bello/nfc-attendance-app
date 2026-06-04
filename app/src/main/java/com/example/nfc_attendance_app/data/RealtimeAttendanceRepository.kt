@@ -1,5 +1,6 @@
 package com.example.nfc_attendance_app.data
 
+import android.util.Log
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceResult
 import com.example.nfc_attendance_app.data.model.AttendanceType
@@ -26,6 +27,8 @@ class RealtimeAttendanceRepository(
                 .child(tagId)
                 .get()
                 .await()
+
+            Log.d("TAGSNAPSHOT", tagSnapshot.toString())
 
             if (!tagSnapshot.exists()) {
                 throw Exception("등록되지 않은 NFC 태그입니다.")

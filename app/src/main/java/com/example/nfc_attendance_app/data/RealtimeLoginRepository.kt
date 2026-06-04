@@ -1,5 +1,6 @@
 package com.example.nfc_attendance_app.data
 
+import android.util.Log
 import com.example.nfc_attendance_app.data.model.UserInfo
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
