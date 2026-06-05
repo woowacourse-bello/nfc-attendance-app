@@ -30,13 +30,16 @@ import com.example.nfc_attendance_app.ui.nfc.NfcAttendanceRoute
 import com.example.nfc_attendance_app.ui.nfc.NfcAttendanceViewModel
 import com.example.nfc_attendance_app.ui.theme.NfcattendanceappTheme
 
+import com.example.nfc_attendance_app.data.RealtimeAttendanceHistoryRepository
+import com.example.nfc_attendance_app.ui.main.MainScreen
+
 class MainActivity : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
     private var pendingIntent: PendingIntent? = null
 
     // ViewModel들을 Activity 레벨에서 관리하거나 Navigation 내부에서 주입
-    private lateinit var nfcViewModel: NfcAttendanceViewModel
+    private var nfcViewModel: NfcAttendanceViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,10 +80,11 @@ class MainActivity : ComponentActivity() {
         val preferences = LocalUserPreferences(applicationContext)
         val loginRepository = RealtimeLoginRepository()
         val attendanceRepository = RealtimeAttendanceRepository()
+        val historyRepository = RealtimeAttendanceHistoryRepository()
 
         NavHost(
             navController = navController,
-            startDestination = if (preferences.isLoggedIn()) "attendance" else "login"
+            startDestination = if (preferences.isLoggedIn()) "main" else "login"
         ) {
             composable("login") {
                 val viewModel: LoginViewModel = viewModel {
@@ -94,19 +98,20 @@ class MainActivity : ComponentActivity() {
                     onUserNumberChanged = { viewModel.onUserNumberChanged(it) },
                     onLoginClick = { viewModel.login() },
                     onLoginSuccess = {
-                        navController.navigate("attendance") {
+                        navController.navigate("main") {
                             popUpTo("login") { inclusive = true }
                         }
                     }
                 )
             }
 
-            composable("attendance") {
-                // nfcViewModel을 외부에서도 접근할 수 있도록 activity 프로퍼티에 할당
-                nfcViewModel = viewModel {
-                    NfcAttendanceViewModel(attendanceRepository, preferences)
-                }
-                NfcAttendanceRoute(viewModel = nfcViewModel)
+            composable("main") {
+                MainScreen(
+                    attendanceRepository = attendanceRepository,
+                    historyRepository = historyRepository,
+                    preferences = preferences,
+                    onNfcViewModelCreated = { nfcViewModel = it }
+                )
             }
         }
     }
@@ -133,9 +138,7 @@ class MainActivity : ComponentActivity() {
             val tagId = extractTagId(intent)
             if (tagId != null) {
                 // 7. ViewModel에 전달
-                if (::nfcViewModel.isInitialized) {
-                    nfcViewModel.onNfcTagDetected(tagId)
-                }
+                nfcViewModel?.onNfcTagDetected(tagId)
             }
         }
     }
