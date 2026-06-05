@@ -1,6 +1,7 @@
 package com.example.nfc_attendance_app.data
 
 import android.util.Log
+import com.example.nfc_attendance_app.data.model.AttendanceActionResult
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceResult
 import com.example.nfc_attendance_app.data.model.AttendanceStatus
@@ -18,11 +19,11 @@ class RealtimeAttendanceRepository(
     private val policy: AttendancePolicy = AttendancePolicy()
 ) : AttendanceRepository {
 
-    override suspend fun recordAttendance(
+    override suspend fun processAttendance(
         userNumber: String,
         userName: String,
         tagId: String
-    ): AttendanceResult {
+    ): AttendanceActionResult {
         try {
             // 1. NFC 태그 유효성 검사
             val tagSnapshot = database.reference
@@ -64,48 +65,98 @@ class RealtimeAttendanceRepository(
             val hasCheckIn = todayRecords.any { it.type == AttendanceType.CHECK_IN.name }
             val hasCheckOut = todayRecords.any { it.type == AttendanceType.CHECK_OUT.name }
 
-            val (typeToRecord, statusToRecord, successMessage) = when {
+            return when {
                 !hasCheckIn -> {
                     if (policy.isBeforeCheckInStart(currentTime)) {
                         throw Exception("등교 가능 시간이 아닙니다.")
                     }
                     val status = policy.getCheckInStatus(currentTime)
-                    Triple(AttendanceType.CHECK_IN, status, "출석이 완료되었습니다.")
+                    val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_IN, status, currentTime, "출석이 완료되었습니다.")
+                    AttendanceActionResult.Saved(result)
                 }
                 !hasCheckOut -> {
                     val status = policy.getCheckOutStatus(currentTime)
-                    val message = if (status == AttendanceStatus.EARLY_LEAVE) "조퇴 처리되었습니다." else "퇴실이 완료되었습니다."
-                    Triple(AttendanceType.CHECK_OUT, status, message)
+                    if (status == AttendanceStatus.EARLY_LEAVE) {
+                        // 18:00 이전 퇴실이면 보류 상태 반환
+                        AttendanceActionResult.PendingEarlyLeave(userNumber, userName, tagId, currentTime)
+                    } else {
+                        val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_OUT, null, currentTime, "퇴실이 완료되었습니다.")
+                        AttendanceActionResult.Saved(result)
+                    }
                 }
                 else -> throw Exception("오늘 출석과 퇴실이 이미 완료되었습니다.")
             }
-
-            // 4. 기록 저장
-            val newRecord = AttendanceRecord(
-                userNumber = userNumber,
-                userName = userName,
-                tagId = tagId,
-                type = typeToRecord.name,
-                status = statusToRecord?.name,
-                checkedAt = currentTime
-            )
-
-            database.reference
-                .child("attendanceRecords")
-                .push()
-                .setValue(newRecord)
-                .await()
-
-            return AttendanceResult(
-                message = successMessage,
-                type = typeToRecord,
-                status = statusToRecord,
-                checkedAt = newRecord.checkedAt
-            )
-
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    override suspend fun confirmEarlyLeave(
+        userNumber: String,
+        userName: String,
+        tagId: String,
+        checkedAt: Long
+    ): AttendanceResult {
+        try {
+            // 중복 저장 방어: 오늘 이미 퇴실 기록이 있는지 다시 확인
+            val recordsSnapshot = database.reference
+                .child("attendanceRecords")
+                .orderByChild("userNumber")
+                .equalTo(userNumber)
+                .get()
+                .await()
+
+            val alreadyHasCheckOut = recordsSnapshot.children.mapNotNull {
+                it.getValue(AttendanceRecord::class.java)
+            }.filter { isSameDate(it.checkedAt, checkedAt) }
+             .any { it.type == AttendanceType.CHECK_OUT.name }
+
+            if (alreadyHasCheckOut) {
+                throw Exception("오늘 출석과 퇴실이 이미 완료되었습니다.")
+            }
+
+            return saveRecord(
+                userNumber, userName, tagId, 
+                AttendanceType.CHECK_OUT, 
+                AttendanceStatus.EARLY_LEAVE, 
+                checkedAt, 
+                "조퇴 처리되었습니다."
+            )
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    private suspend fun saveRecord(
+        userNumber: String,
+        userName: String,
+        tagId: String,
+        type: AttendanceType,
+        status: AttendanceStatus?,
+        checkedAt: Long,
+        successMessage: String
+    ): AttendanceResult {
+        val newRecord = AttendanceRecord(
+            userNumber = userNumber,
+            userName = userName,
+            tagId = tagId,
+            type = type.name,
+            status = status?.name,
+            checkedAt = checkedAt
+        )
+
+        database.reference
+            .child("attendanceRecords")
+            .push()
+            .setValue(newRecord)
+            .await()
+
+        return AttendanceResult(
+            message = successMessage,
+            type = type,
+            status = status,
+            checkedAt = checkedAt
+        )
     }
 
     private fun isSameDate(timestamp1: Long, timestamp2: Long): Boolean {

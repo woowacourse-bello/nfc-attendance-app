@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,14 +32,18 @@ fun NfcAttendanceRoute(
 
     NfcAttendanceScreen(
         uiState = uiState,
-        onReset = { viewModel.resetToWaiting() }
+        onReset = { viewModel.resetToWaiting() },
+        onConfirmEarlyLeave = { viewModel.confirmEarlyLeave() },
+        onCancelEarlyLeave = { viewModel.cancelEarlyLeave() }
     )
 }
 
 @Composable
 fun NfcAttendanceScreen(
     uiState: NfcAttendanceUiState,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onConfirmEarlyLeave: () -> Unit,
+    onCancelEarlyLeave: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -60,6 +66,26 @@ fun NfcAttendanceScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("출석 정보를 처리 중입니다...")
                 }
+            }
+
+            is NfcAttendanceUiState.ConfirmEarlyLeave -> {
+                AlertDialog(
+                    onDismissRequest = onCancelEarlyLeave,
+                    title = { Text("이른 하교 확인") },
+                    text = {
+                        Text("아직 하교 시작 시각 전입니다.\n지금 퇴실하면 조퇴로 기록됩니다.\n퇴실 처리하시겠습니까?")
+                    },
+                    confirmButton = {
+                        TextButton(onClick = onConfirmEarlyLeave) {
+                            Text("예")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = onCancelEarlyLeave) {
+                            Text("아니요")
+                        }
+                    }
+                )
             }
 
             is NfcAttendanceUiState.Success -> {

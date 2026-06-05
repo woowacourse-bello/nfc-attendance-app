@@ -6,6 +6,14 @@ import com.example.nfc_attendance_app.data.model.AttendanceType
 sealed interface NfcAttendanceUiState {
     data object Waiting : NfcAttendanceUiState
     data object Loading : NfcAttendanceUiState
+    
+    data class ConfirmEarlyLeave(
+        val userNumber: String,
+        val userName: String,
+        val tagId: String,
+        val checkedAt: Long,
+    ) : NfcAttendanceUiState
+
     data class Success(
         val message: String,
         val type: AttendanceType,
