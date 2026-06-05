@@ -1,19 +1,14 @@
 package com.example.nfc_attendance_app.ui.nfc
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,9 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.nfc_attendance_app.data.model.AttendanceStatus
 import com.example.nfc_attendance_app.utils.DateTimeFormatter
 
 @Composable
@@ -35,118 +30,100 @@ fun NfcAttendanceRoute(
 
     NfcAttendanceScreen(
         uiState = uiState,
-        onResetClick = { viewModel.resetToWaiting() }
+        onReset = { viewModel.resetToWaiting() }
     )
 }
 
 @Composable
 fun NfcAttendanceScreen(
     uiState: NfcAttendanceUiState,
-    onResetClick: () -> Unit = {}
+    onReset: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "NFC 출석 체크",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        when (uiState) {
+            is NfcAttendanceUiState.Waiting -> {
+                Text(
+                    text = "NFC 태그를 스마트폰 뒷면에 접촉해주세요.",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-        Text(
-            text = "오늘 출석 기록이 없으면 출석 처리되고,\n이미 출석했다면 퇴실 처리됩니다.",
-            fontSize = 14.sp,
-            color = Color.Gray,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 48.dp)
-        )
+            is NfcAttendanceUiState.Loading -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("출석 정보를 처리 중입니다...")
+                }
+            }
 
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(24.dp)
-            ) {
-                when (uiState) {
-                    is NfcAttendanceUiState.Waiting -> {
+            is NfcAttendanceUiState.Success -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = uiState.message,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    uiState.status?.let {
                         Text(
-                            text = "휴대폰을 NFC 태그에\n가까이 대주세요.",
+                            text = "상태: ${it.toDisplayName()}",
                             fontSize = 18.sp,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Medium
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
 
-                    is NfcAttendanceUiState.Reading -> {
-                        Text(
-                            text = "NFC 태그를 인식했습니다.",
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    Text(
+                        text = "시간: ${DateTimeFormatter.formatCheckedAt(uiState.checkedAt)}",
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(onClick = onReset) {
+                        Text("확인")
                     }
+                }
+            }
 
-                    is NfcAttendanceUiState.Loading -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "출석/퇴실 처리 중입니다.",
-                                fontSize = 16.sp
-                            )
-                        }
-                    }
-
-                    is NfcAttendanceUiState.Success -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = uiState.message,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "시간: ${DateTimeFormatter.formatCheckedAt(uiState.checkedAt)}",
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(onClick = onResetClick) {
-                                Text("확인")
-                            }
-                        }
-                    }
-
-                    is NfcAttendanceUiState.Error -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = uiState.message,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Red,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(
-                                onClick = onResetClick,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                            ) {
-                                Text("다시 시도", color = Color.White)
-                            }
-                        }
+            is NfcAttendanceUiState.Error -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = uiState.message,
+                        fontSize = 18.sp,
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(onClick = onReset) {
+                        Text("다시 시도")
                     }
                 }
             }
         }
+    }
+}
+
+fun AttendanceStatus.toDisplayName(): String {
+    return when (this) {
+        AttendanceStatus.PRESENT -> "정상 출석"
+        AttendanceStatus.LATE -> "지각"
+        AttendanceStatus.ABSENT -> "결석"
+        AttendanceStatus.EARLY_LEAVE -> "조퇴"
+    }
+}
+
+fun String?.toAttendanceStatusDisplayName(): String? {
+    return when (this) {
+        "PRESENT" -> "정상 출석"
+        "LATE" -> "지각"
+        "ABSENT" -> "결석"
+        "EARLY_LEAVE" -> "조퇴"
+        else -> null
     }
 }

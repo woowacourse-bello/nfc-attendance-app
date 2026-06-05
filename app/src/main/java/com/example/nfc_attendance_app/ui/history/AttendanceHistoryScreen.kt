@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceType
+import com.example.nfc_attendance_app.ui.nfc.toAttendanceStatusDisplayName
 import com.example.nfc_attendance_app.utils.DateTimeFormatter
 
 @Composable
@@ -138,6 +139,16 @@ fun HistoryItem(record: AttendanceRecord) {
                 style = MaterialTheme.typography.titleMedium,
                 color = typeColor
             )
+            
+            val statusDisplayName = record.status.toAttendanceStatusDisplayName()
+            if (statusDisplayName != null) {
+                Text(
+                    text = "상태: $statusDisplayName",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "시간: ${DateTimeFormatter.formatCheckedAt(record.checkedAt)}",

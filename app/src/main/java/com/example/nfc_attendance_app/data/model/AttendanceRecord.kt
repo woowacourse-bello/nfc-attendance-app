@@ -4,6 +4,7 @@ data class AttendanceRecord(
     val userNumber: String = "",
     val userName: String = "",
     val tagId: String = "",
-    val type: String = AttendanceType.CHECK_IN.name,
-    val checkedAt: Long = System.currentTimeMillis()
+    val type: String = "",
+    val status: String? = null,
+    val checkedAt: Long = 0L,
 )
