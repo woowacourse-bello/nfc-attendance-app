@@ -67,6 +67,29 @@ fun NfcAttendanceScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 0. 사용자 인사말 섹션
+        if (uiState.userName.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp, start = 4.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = uiState.userName,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "님, 안녕하세요!",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                )
+            }
+        }
+
         // 1. 오늘의 출석 현황 섹션
         TodayStatusSection(uiState.todayRecords)
 

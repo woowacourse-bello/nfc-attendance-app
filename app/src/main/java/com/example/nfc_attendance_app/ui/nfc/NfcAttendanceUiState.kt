@@ -5,6 +5,7 @@ import com.example.nfc_attendance_app.data.model.AttendanceStatus
 import com.example.nfc_attendance_app.data.model.AttendanceType
 
 data class NfcAttendanceUiState(
+    val userName: String = "",
     val todayRecords: List<AttendanceRecord> = emptyList(),
     val actionState: ActionState = ActionState.Waiting
 )

@@ -20,6 +20,7 @@ class NfcAttendanceViewModel(
     val uiState: StateFlow<NfcAttendanceUiState> = _uiState.asStateFlow()
 
     init {
+        _uiState.update { it.copy(userName = preferences.getUserName() ?: "") }
         loadTodayRecords()
     }
 
