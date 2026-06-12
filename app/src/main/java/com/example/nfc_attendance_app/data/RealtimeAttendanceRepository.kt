@@ -1,6 +1,5 @@
 package com.example.nfc_attendance_app.data
 
-import android.util.Log
 import com.example.nfc_attendance_app.data.model.AttendanceActionResult
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceResult
@@ -125,6 +124,21 @@ class RealtimeAttendanceRepository(
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    override suspend fun getTodayRecords(userNumber: String): List<AttendanceRecord> {
+        val currentTime = System.currentTimeMillis()
+        val recordsSnapshot = database.reference
+            .child("attendanceRecords")
+            .orderByChild("userNumber")
+            .equalTo(userNumber)
+            .get()
+            .await()
+
+        return recordsSnapshot.children.mapNotNull {
+            it.getValue(AttendanceRecord::class.java)
+        }.filter { isSameDate(it.checkedAt, currentTime) }
+            .sortedBy { it.checkedAt }
     }
 
     private suspend fun saveRecord(
