@@ -128,9 +128,9 @@ fun NfcAttendanceScreen(
                 is ActionState.ConfirmEarlyLeave -> {
                     AlertDialog(
                         onDismissRequest = onCancelEarlyLeave,
-                        title = { Text("이른 하교 확인") },
+                        title = { Text("조퇴 확인") },
                         text = {
-                            Text("아직 하교 시작 시각 전입니다.\n지금 퇴실하면 조퇴로 기록됩니다.\n퇴실 처리하시겠습니까?")
+                            Text("아직 하교 시작 시각 전입니다.\n지금 하교하면 조퇴로 기록됩니다.\n하교 처리하시겠습니까?")
                         },
                         confirmButton = {
                             TextButton(onClick = onConfirmEarlyLeave) {
@@ -147,10 +147,11 @@ fun NfcAttendanceScreen(
 
                 is ActionState.Success -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val statusColor = actionState.status?.toColor() ?: Color(0xFF4CAF50)
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50),
+                            tint = statusColor,
                             modifier = Modifier.size(64.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -158,7 +159,7 @@ fun NfcAttendanceScreen(
                             text = actionState.message,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = statusColor
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -166,7 +167,8 @@ fun NfcAttendanceScreen(
                             Text(
                                 text = "상태: ${it.toDisplayName()}",
                                 fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.secondary
+                                color = it.toColor(),
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
 
@@ -248,13 +250,10 @@ fun TodayStatusSection(records: List<AttendanceRecord>) {
                         text = it.toDisplayName(),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (it == AttendanceStatus.PRESENT) Color(0xFF4CAF50) else Color.Red,
+                        color = it.toColor(),
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                (if (it == AttendanceStatus.PRESENT) Color(0xFF4CAF50) else Color.Red)
-                                    .copy(alpha = 0.1f)
-                            )
+                            .background(it.toColor().copy(alpha = 0.1f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -266,14 +265,14 @@ fun TodayStatusSection(records: List<AttendanceRecord>) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatusItem("출근", checkIn)
+                StatusItem("등교", checkIn)
                 Box(
                     modifier = Modifier
                         .height(40.dp)
                         .width(1.dp)
                         .background(MaterialTheme.colorScheme.outlineVariant)
                 )
-                StatusItem("퇴근", checkOut)
+                StatusItem("하교", checkOut)
             }
         }
     }
@@ -295,6 +294,14 @@ fun StatusItem(label: String, record: AttendanceRecord?) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
+            record.status?.let { statusStr ->
+                val status = try { AttendanceStatus.valueOf(statusStr) } catch(e: Exception) { null }
+                Text(
+                    text = status?.toDisplayName() ?: "",
+                    fontSize = 12.sp,
+                    color = status?.toColor() ?: MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         } else {
             Text(
                 text = "--:--",
@@ -308,16 +315,25 @@ fun StatusItem(label: String, record: AttendanceRecord?) {
 
 fun AttendanceStatus.toDisplayName(): String {
     return when (this) {
-        AttendanceStatus.PRESENT -> "정상 출석"
+        AttendanceStatus.PRESENT -> "정상 등교"
         AttendanceStatus.LATE -> "지각"
         AttendanceStatus.ABSENT -> "결석"
         AttendanceStatus.EARLY_LEAVE -> "조퇴"
     }
 }
 
+fun AttendanceStatus.toColor(): Color {
+    return when (this) {
+        AttendanceStatus.PRESENT -> Color(0xFF4CAF50) // 초록색
+        AttendanceStatus.LATE -> Color(0xFFFF9800)    // 주황색
+        AttendanceStatus.ABSENT -> Color(0xFFF44336)  // 빨간색
+        AttendanceStatus.EARLY_LEAVE -> Color(0xFFFF9800) // 주황색 (지각과 동일하게 처리하거나 필요시 변경)
+    }
+}
+
 fun String?.toAttendanceStatusDisplayName(): String? {
     return when (this) {
-        "PRESENT" -> "정상 출석"
+        "PRESENT" -> "정상 등교"
         "LATE" -> "지각"
         "ABSENT" -> "결석"
         "EARLY_LEAVE" -> "조퇴"

@@ -37,7 +37,7 @@ class NfcAttendanceViewModel(
     }
 
     fun onNfcTagDetected(tagId: String) {
-        // 중복 태깅 방지: 로딩 중이거나 이른 하교 확인 대기 중이면 무시
+        // 중복 태깅 방지: 로딩 중이거나 조퇴 확인 대기 중이면 무시
         if (_uiState.value.actionState is ActionState.Loading) return
         if (_uiState.value.actionState is ActionState.ConfirmEarlyLeave) return
 

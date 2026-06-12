@@ -38,7 +38,7 @@ class AttendanceHistoryViewModel(
                     _uiState.value = AttendanceHistoryUiState.Success(records)
                 }
             } catch (e: Exception) {
-                _uiState.value = AttendanceHistoryUiState.Error("출석 기록을 불러오지 못했습니다.")
+                _uiState.value = AttendanceHistoryUiState.Error("기록을 불러오지 못했습니다.")
             }
         }
     }

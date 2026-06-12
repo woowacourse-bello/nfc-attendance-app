@@ -50,7 +50,7 @@ fun AttendanceHistoryScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("출석 히스토리") })
+            TopAppBar(title = { Text("등하교 히스토리") })
         }
     ) { paddingValues ->
         Box(
@@ -66,7 +66,7 @@ fun AttendanceHistoryScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("출석 기록을 불러오는 중입니다.")
+                        Text("기록을 불러오는 중입니다.")
                     }
                 }
 
@@ -75,7 +75,7 @@ fun AttendanceHistoryScreen(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("아직 출석/퇴실 기록이 없습니다.")
+                        Text("아직 등하교 기록이 없습니다.")
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = onRefresh) {
                             Text("새로고침")
@@ -130,10 +130,9 @@ fun HistoryItem(record: AttendanceRecord) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            val typeText = if (record.type == AttendanceType.CHECK_IN.name) "출석" else "퇴실"
-            val typeColor = if (record.type == AttendanceType.CHECK_IN.name) 
+            val typeText = if (record.type == AttendanceType.CHECK_IN.name) "등교" else "하교"
+            val typeColor = if (record.type == AttendanceType.CHECK_IN.name)
                 MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-
             Text(
                 text = typeText,
                 style = MaterialTheme.typography.titleMedium,
