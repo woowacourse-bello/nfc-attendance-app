@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -128,20 +130,64 @@ fun NfcAttendanceScreen(
                 is ActionState.ConfirmEarlyLeave -> {
                     AlertDialog(
                         onDismissRequest = onCancelEarlyLeave,
-                        title = { Text("조퇴 확인") },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(40.dp)
+                            )
+                        },
+                        title = {
+                            Text(
+                                text = "조퇴 확인",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
                         text = {
-                            Text("아직 하교 시작 시각 전입니다.\n지금 하교하면 조퇴로 기록됩니다.\n하교 처리하시겠습니까?")
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "아직 하교 시작 시각 전입니다.",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "지금 하교하면 조퇴로 기록됩니다.\n정말 하교 처리하시겠습니까?",
+                                    fontSize = 14.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         },
                         confirmButton = {
-                            TextButton(onClick = onConfirmEarlyLeave) {
-                                Text("예")
+                            Button(
+                                onClick = onConfirmEarlyLeave,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFF9800)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                            ) {
+                                Text("네, 하교하겠습니다", color = Color.White)
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = onCancelEarlyLeave) {
-                                Text("아니요")
+                            TextButton(
+                                onClick = onCancelEarlyLeave,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                            ) {
+                                Text("아니요, 더 있다 갈게요", color = MaterialTheme.colorScheme.outline)
                             }
-                        }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 6.dp
                     )
                 }
 
