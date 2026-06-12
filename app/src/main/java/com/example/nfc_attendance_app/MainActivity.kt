@@ -33,13 +33,19 @@ import com.example.nfc_attendance_app.ui.theme.NfcattendanceappTheme
 import com.example.nfc_attendance_app.data.RealtimeAttendanceHistoryRepository
 import com.example.nfc_attendance_app.ui.main.MainScreen
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.nfc_attendance_app.ui.main.BottomNavItem
+
 class MainActivity : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
     private var pendingIntent: PendingIntent? = null
 
-    // ViewModel들을 Activity 레벨에서 관리하거나 Navigation 내부에서 주입
+    // ViewModel 및 내비게이션 상태 관리
     private var nfcViewModel: NfcAttendanceViewModel? = null
+    private var externalTabRequest by mutableStateOf<BottomNavItem?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,7 +116,9 @@ class MainActivity : ComponentActivity() {
                     attendanceRepository = attendanceRepository,
                     historyRepository = historyRepository,
                     preferences = preferences,
-                    onNfcViewModelCreated = { nfcViewModel = it }
+                    onNfcViewModelCreated = { nfcViewModel = it },
+                    externalTabRequest = externalTabRequest,
+                    onTabRequestConsumed = { externalTabRequest = null }
                 )
             }
         }
@@ -137,7 +145,8 @@ class MainActivity : ComponentActivity() {
         ) {
             val tagId = extractTagId(intent)
             if (tagId != null) {
-                // 7. ViewModel에 전달
+                // 7. 히스토리 탭 등에 있더라도 등하교 탭으로 강제 이동 후 처리
+                externalTabRequest = BottomNavItem.Attendance
                 nfcViewModel?.onNfcTagDetected(tagId)
             }
         }
