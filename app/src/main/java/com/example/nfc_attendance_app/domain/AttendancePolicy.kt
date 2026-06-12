@@ -37,15 +37,15 @@ class AttendancePolicy {
         val nowTime = Instant.ofEpochMilli(nowMillis)
             .atZone(zoneId)
             .toLocalTime()
-        return nowTime.isBefore(LocalTime.of(8, 0))
+        return nowTime.isBefore(LocalTime.of(6, 0))
     }
 
     fun isRecordRestricted(nowMillis: Long): Boolean {
         val nowTime = Instant.ofEpochMilli(nowMillis)
             .atZone(zoneId)
             .toLocalTime()
-        // 23:01 이후면 true (23:01 포함)
-        return !nowTime.isBefore(LocalTime.of(23, 1))
+        // 23:30 이후면 true (23:30 포함)
+        return !nowTime.isBefore(LocalTime.of(23, 30))
     }
 
     /**

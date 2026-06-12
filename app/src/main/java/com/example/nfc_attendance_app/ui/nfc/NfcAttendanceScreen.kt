@@ -294,14 +294,6 @@ fun StatusItem(label: String, record: AttendanceRecord?) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            record.status?.let { statusStr ->
-                val status = try { AttendanceStatus.valueOf(statusStr) } catch(e: Exception) { null }
-                Text(
-                    text = status?.toDisplayName() ?: "",
-                    fontSize = 12.sp,
-                    color = status?.toColor() ?: MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         } else {
             Text(
                 text = "--:--",
