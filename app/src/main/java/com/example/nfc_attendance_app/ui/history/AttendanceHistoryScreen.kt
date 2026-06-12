@@ -68,9 +68,7 @@ fun AttendanceHistoryScreen(
     onRefresh: () -> Unit,
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("등하교 히스토리") })
-        }
+        // topBar 제거하여 제목 노출 안 함
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -222,69 +220,81 @@ fun AttendanceSummarySection(stats: AttendanceStats) {
             .fillMaxWidth()
             .padding(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(16.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "종합 출결 통계",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "전체 등교 일수",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${stats.totalDays}일",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "누적 벌점",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${stats.totalPoints}점",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (stats.totalPoints > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
+                    )
+                }
+            }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(20.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                StatItem("총 등교", "${stats.totalDays}일")
-                StatItem("정상", "${stats.normalDays}일")
-                StatItem("지각/조퇴", "${stats.lateDays + stats.earlyLeaveDays}일")
-                StatItem("결석", "${stats.absentDays}일")
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "누적 벌점: ",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "${stats.totalPoints}점",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (stats.totalPoints > 0) Color(0xFFF44336) else MaterialTheme.colorScheme.primary
-                )
+                MiniStatItem("정상", "${stats.normalDays}", Color(0xFF4CAF50))
+                MiniStatItem("지각", "${stats.lateDays}", Color(0xFFFF9800))
+                MiniStatItem("조퇴", "${stats.earlyLeaveDays}", Color(0xFFFF9800))
+                MiniStatItem("결석", "${stats.absentDays}", Color(0xFFF44336))
             }
         }
     }
 }
 
 @Composable
-fun StatItem(label: String, value: String) {
+fun MiniStatItem(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            color = color
         )
     }
 }
