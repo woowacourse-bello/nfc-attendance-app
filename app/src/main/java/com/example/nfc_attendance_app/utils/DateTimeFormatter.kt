@@ -14,4 +14,9 @@ object DateTimeFormatter {
         val formatter = SimpleDateFormat("HH:mm", Locale.KOREA)
         return formatter.format(Date(timestamp))
     }
+
+    fun formatDate(timestamp: Long): String {
+        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+        return formatter.format(Date(timestamp))
+    }
 }
