@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceStatus
 import com.example.nfc_attendance_app.data.model.AttendanceType
+import com.example.nfc_attendance_app.domain.AttendancePolicy
 import com.example.nfc_attendance_app.utils.DateTimeFormatter
 
 @Composable
@@ -187,6 +188,15 @@ fun NfcAttendanceScreen(
 
 @Composable
 fun TodayStatusSection(records: List<AttendanceRecord>) {
+    val policy = AttendancePolicy()
+    val checkIn = records.find { it.type == AttendanceType.CHECK_IN.name }
+    val checkOut = records.find { it.type == AttendanceType.CHECK_OUT.name }
+
+    val checkInStatus = checkIn?.status?.let { AttendanceStatus.valueOf(it) }
+    val checkOutStatus = checkOut?.status?.let { AttendanceStatus.valueOf(it) }
+    
+    val dailyStatus = policy.calculateDailyStatus(checkInStatus, checkOutStatus)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -198,21 +208,41 @@ fun TodayStatusSection(records: List<AttendanceRecord>) {
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "오늘의 출결 상태",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "오늘의 출결 상태",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                dailyStatus?.let {
+                    Text(
+                        text = it.toDisplayName(),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (it == AttendanceStatus.PRESENT) Color(0xFF4CAF50) else Color.Red,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                (if (it == AttendanceStatus.PRESENT) Color(0xFF4CAF50) else Color.Red)
+                                    .copy(alpha = 0.1f)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                val checkIn = records.find { it.type == AttendanceType.CHECK_IN.name }
-                val checkOut = records.find { it.type == AttendanceType.CHECK_OUT.name }
-
                 StatusItem("출근", checkIn)
                 Box(
                     modifier = Modifier
@@ -242,13 +272,6 @@ fun StatusItem(label: String, record: AttendanceRecord?) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            record.status?.let { statusStr ->
-                Text(
-                    text = statusStr.toAttendanceStatusDisplayName() ?: "",
-                    fontSize = 12.sp,
-                    color = if (statusStr == "PRESENT") Color(0xFF4CAF50) else Color.Red
-                )
-            }
         } else {
             Text(
                 text = "--:--",
