@@ -69,6 +69,10 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
+        val historyViewModel: AttendanceHistoryViewModel = viewModel {
+            AttendanceHistoryViewModel(historyRepository, preferences)
+        }
+        
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Attendance.route,
@@ -82,9 +86,6 @@ fun MainScreen(
                 NfcAttendanceRoute(viewModel = nfcViewModel)
             }
             composable(BottomNavItem.History.route) {
-                val historyViewModel: AttendanceHistoryViewModel = viewModel {
-                    AttendanceHistoryViewModel(historyRepository, preferences)
-                }
                 AttendanceHistoryRoute(viewModel = historyViewModel)
             }
         }

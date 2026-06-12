@@ -17,10 +17,6 @@ class AttendanceHistoryViewModel(
     private val _uiState = MutableStateFlow<AttendanceHistoryUiState>(AttendanceHistoryUiState.Loading)
     val uiState: StateFlow<AttendanceHistoryUiState> = _uiState.asStateFlow()
 
-    init {
-        loadHistory()
-    }
-
     fun loadHistory() {
         val userNumber = preferences.getUserNumber()
         if (userNumber == null) {

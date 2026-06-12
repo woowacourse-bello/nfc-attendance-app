@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -47,6 +48,11 @@ fun AttendanceHistoryRoute(
     viewModel: AttendanceHistoryViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // 화면이 보일 때마다 자동으로 새로고침
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
 
     AttendanceHistoryScreen(
         uiState = uiState,
