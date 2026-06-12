@@ -1,6 +1,5 @@
 package com.example.nfc_attendance_app.data
 
-import android.util.Log
 import com.example.nfc_attendance_app.data.model.AttendanceActionResult
 import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceResult
@@ -37,7 +36,7 @@ class RealtimeAttendanceRepository(
             }
 
             val tagInfo = tagSnapshot.getValue(NfcTagInfo::class.java)
-                ?: throw Exception("출석/퇴실 처리에 실패했습니다.")
+                ?: throw Exception("등교/하교 처리에 실패했습니다.")
 
             if (!tagInfo.isActive) {
                 throw Exception("비활성화된 NFC 태그입니다.")
@@ -47,7 +46,7 @@ class RealtimeAttendanceRepository(
             val currentTime = System.currentTimeMillis()
             
             if (policy.isRecordRestricted(currentTime)) {
-                throw Exception("오늘 출석/퇴실 기록 가능 시간이 지났습니다.")
+                throw Exception("오늘 등교/하교 기록 가능 시간이 지났습니다.")
             }
 
             // 3. 사용자의 오늘 기록 조회 및 타입 자동 판단
@@ -71,20 +70,20 @@ class RealtimeAttendanceRepository(
                         throw Exception("등교 가능 시간이 아닙니다.")
                     }
                     val status = policy.getCheckInStatus(currentTime)
-                    val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_IN, status, currentTime, "출석이 완료되었습니다.")
+                    val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_IN, status, currentTime, "등교가 완료되었습니다.")
                     AttendanceActionResult.Saved(result)
                 }
                 !hasCheckOut -> {
                     val status = policy.getCheckOutStatus(currentTime)
                     if (status == AttendanceStatus.EARLY_LEAVE) {
-                        // 18:00 이전 퇴실이면 보류 상태 반환
+                        // 18:00 이전 하교이면 보류 상태 반환
                         AttendanceActionResult.PendingEarlyLeave(userNumber, userName, tagId, currentTime)
                     } else {
-                        val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_OUT, null, currentTime, "퇴실이 완료되었습니다.")
+                        val result = saveRecord(userNumber, userName, tagId, AttendanceType.CHECK_OUT, null, currentTime, "하교가 완료되었습니다.")
                         AttendanceActionResult.Saved(result)
                     }
                 }
-                else -> throw Exception("오늘 출석과 퇴실이 이미 완료되었습니다.")
+                else -> throw Exception("오늘 등교와 하교가 이미 완료되었습니다.")
             }
         } catch (e: Exception) {
             throw e
@@ -112,7 +111,7 @@ class RealtimeAttendanceRepository(
              .any { it.type == AttendanceType.CHECK_OUT.name }
 
             if (alreadyHasCheckOut) {
-                throw Exception("오늘 출석과 퇴실이 이미 완료되었습니다.")
+                throw Exception("오늘 등교와 하교가 이미 완료되었습니다.")
             }
 
             return saveRecord(
@@ -125,6 +124,21 @@ class RealtimeAttendanceRepository(
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    override suspend fun getTodayRecords(userNumber: String): List<AttendanceRecord> {
+        val currentTime = System.currentTimeMillis()
+        val recordsSnapshot = database.reference
+            .child("attendanceRecords")
+            .orderByChild("userNumber")
+            .equalTo(userNumber)
+            .get()
+            .await()
+
+        return recordsSnapshot.children.mapNotNull {
+            it.getValue(AttendanceRecord::class.java)
+        }.filter { isSameDate(it.checkedAt, currentTime) }
+            .sortedBy { it.checkedAt }
     }
 
     private suspend fun saveRecord(

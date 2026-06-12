@@ -6,7 +6,7 @@ sealed class BottomNavItem(
 ) {
     data object Attendance : BottomNavItem(
         route = "attendance_tab",
-        label = "출석",
+        label = "등하교",
     )
 
     data object History : BottomNavItem(
