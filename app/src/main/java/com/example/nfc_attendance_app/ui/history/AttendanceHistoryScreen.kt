@@ -367,7 +367,7 @@ fun HistoryTableRow(date: String, records: List<AttendanceRecord>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = checkIn?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--",
+                text = checkIn?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--:--",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (checkIn != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
@@ -377,7 +377,7 @@ fun HistoryTableRow(date: String, records: List<AttendanceRecord>) {
                 color = MaterialTheme.colorScheme.outline
             )
             Text(
-                text = checkOut?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--",
+                text = checkOut?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--:--",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (checkOut != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
