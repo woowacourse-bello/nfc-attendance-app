@@ -37,6 +37,14 @@ class NfcAttendanceViewModel(
     }
 
     fun onNfcTagDetected(tagId: String) {
+        processAttendance(tagId)
+    }
+
+    fun onManualAttendanceClick() {
+        processAttendance("MANUAL")
+    }
+
+    private fun processAttendance(tagId: String) {
         // 중복 태깅 방지: 로딩 중이거나 조퇴 확인 대기 중이면 무시
         if (_uiState.value.actionState is ActionState.Loading) return
         if (_uiState.value.actionState is ActionState.ConfirmEarlyLeave) return
@@ -61,13 +69,27 @@ class NfcAttendanceViewModel(
                 when (actionResult) {
                     is AttendanceActionResult.Saved -> {
                         val result = actionResult.result
+                        
+                        // 서버 데이터를 다시 불러오기 전 UI 깜빡임 방지를 위해 로컬 상태 선반영
+                        val newRecord = com.example.nfc_attendance_app.data.model.AttendanceRecord(
+                            userNumber = userNumber,
+                            userName = userName,
+                            tagId = tagId,
+                            type = result.type.name,
+                            status = result.status?.name,
+                            checkedAt = result.checkedAt
+                        )
+                        
                         _uiState.update { 
-                            it.copy(actionState = ActionState.Success(
-                                message = result.message,
-                                type = result.type,
-                                status = result.status,
-                                checkedAt = result.checkedAt
-                            ))
+                            it.copy(
+                                todayRecords = it.todayRecords + newRecord,
+                                actionState = ActionState.Success(
+                                    message = result.message,
+                                    type = result.type,
+                                    status = result.status,
+                                    checkedAt = result.checkedAt
+                                )
+                            )
                         }
                         // 기록 저장 후 오늘의 기록 갱신
                         loadTodayRecords()
@@ -93,6 +115,10 @@ class NfcAttendanceViewModel(
         }
     }
 
+    fun refresh() {
+        loadTodayRecords()
+    }
+
     fun confirmEarlyLeave() {
         val currentState = _uiState.value.actionState
         if (currentState !is ActionState.ConfirmEarlyLeave) return
@@ -107,13 +133,26 @@ class NfcAttendanceViewModel(
                     checkedAt = currentState.checkedAt
                 )
 
+                // 서버 데이터를 다시 불러오기 전 UI 깜빡임 방지를 위해 로컬 상태 선반영
+                val newRecord = com.example.nfc_attendance_app.data.model.AttendanceRecord(
+                    userNumber = currentState.userNumber,
+                    userName = currentState.userName,
+                    tagId = currentState.tagId,
+                    type = result.type.name,
+                    status = result.status?.name,
+                    checkedAt = result.checkedAt
+                )
+
                 _uiState.update { 
-                    it.copy(actionState = ActionState.Success(
-                        message = result.message,
-                        type = result.type,
-                        status = result.status,
-                        checkedAt = result.checkedAt
-                    ))
+                    it.copy(
+                        todayRecords = it.todayRecords + newRecord,
+                        actionState = ActionState.Success(
+                            message = result.message,
+                            type = result.type,
+                            status = result.status,
+                            checkedAt = result.checkedAt
+                        )
+                    )
                 }
                 // 기록 저장 후 오늘의 기록 갱신
                 loadTodayRecords()

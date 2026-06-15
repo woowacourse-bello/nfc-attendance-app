@@ -8,13 +8,13 @@ interface AttendanceRepository {
     suspend fun processAttendance(
         userNumber: String,
         userName: String,
-        tagId: String,
+        tagId: String = "MANUAL",
     ): AttendanceActionResult
 
     suspend fun confirmEarlyLeave(
         userNumber: String,
         userName: String,
-        tagId: String,
+        tagId: String = "MANUAL",
         checkedAt: Long,
     ): AttendanceResult
 
