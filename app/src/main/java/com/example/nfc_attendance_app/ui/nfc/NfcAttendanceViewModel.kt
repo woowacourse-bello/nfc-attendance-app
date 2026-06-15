@@ -69,13 +69,27 @@ class NfcAttendanceViewModel(
                 when (actionResult) {
                     is AttendanceActionResult.Saved -> {
                         val result = actionResult.result
+                        
+                        // 서버 데이터를 다시 불러오기 전 UI 깜빡임 방지를 위해 로컬 상태 선반영
+                        val newRecord = com.example.nfc_attendance_app.data.model.AttendanceRecord(
+                            userNumber = userNumber,
+                            userName = userName,
+                            tagId = tagId,
+                            type = result.type.name,
+                            status = result.status?.name,
+                            checkedAt = result.checkedAt
+                        )
+                        
                         _uiState.update { 
-                            it.copy(actionState = ActionState.Success(
-                                message = result.message,
-                                type = result.type,
-                                status = result.status,
-                                checkedAt = result.checkedAt
-                            ))
+                            it.copy(
+                                todayRecords = it.todayRecords + newRecord,
+                                actionState = ActionState.Success(
+                                    message = result.message,
+                                    type = result.type,
+                                    status = result.status,
+                                    checkedAt = result.checkedAt
+                                )
+                            )
                         }
                         // 기록 저장 후 오늘의 기록 갱신
                         loadTodayRecords()
@@ -119,13 +133,26 @@ class NfcAttendanceViewModel(
                     checkedAt = currentState.checkedAt
                 )
 
+                // 서버 데이터를 다시 불러오기 전 UI 깜빡임 방지를 위해 로컬 상태 선반영
+                val newRecord = com.example.nfc_attendance_app.data.model.AttendanceRecord(
+                    userNumber = currentState.userNumber,
+                    userName = currentState.userName,
+                    tagId = currentState.tagId,
+                    type = result.type.name,
+                    status = result.status?.name,
+                    checkedAt = result.checkedAt
+                )
+
                 _uiState.update { 
-                    it.copy(actionState = ActionState.Success(
-                        message = result.message,
-                        type = result.type,
-                        status = result.status,
-                        checkedAt = result.checkedAt
-                    ))
+                    it.copy(
+                        todayRecords = it.todayRecords + newRecord,
+                        actionState = ActionState.Success(
+                            message = result.message,
+                            type = result.type,
+                            status = result.status,
+                            checkedAt = result.checkedAt
+                        )
+                    )
                 }
                 // 기록 저장 후 오늘의 기록 갱신
                 loadTodayRecords()

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceType
 import com.example.nfc_attendance_app.ui.main.AttendancePolicyDialog
 import com.example.nfc_attendance_app.ui.nfc.ActionState
@@ -56,18 +58,24 @@ fun HomeRoute(
 
     HomeScreen(
         userName = uiState.userName,
-        todayRecords = uiState.todayRecords.map { it.type },
+        todayRecords = uiState.todayRecords,
+        actionState = uiState.actionState,
         onManualClick = { viewModel.onManualAttendanceClick() },
-        onRefresh = { viewModel.refresh() }
+        onRefresh = { viewModel.refresh() },
+        onConfirmEarlyLeave = { viewModel.confirmEarlyLeave() },
+        onCancelEarlyLeave = { viewModel.cancelEarlyLeave() }
     )
 }
 
 @Composable
 fun HomeScreen(
     userName: String,
-    todayRecords: List<String>,
+    todayRecords: List<AttendanceRecord>,
+    actionState: ActionState,
     onManualClick: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onConfirmEarlyLeave: () -> Unit,
+    onCancelEarlyLeave: () -> Unit
 ) {
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var showPolicyDialog by remember { mutableStateOf(false) }
@@ -83,17 +91,23 @@ fun HomeScreen(
         AttendancePolicyDialog(onDismiss = { showPolicyDialog = false })
     }
 
-    val timeFormatter = SimpleDateFormat("HH:mm:ss", Locale.KOREA)
-    val hasCheckIn = todayRecords.contains(AttendanceType.CHECK_IN.name)
-    val hasCheckOut = todayRecords.contains(AttendanceType.CHECK_OUT.name)
-
-    val buttonText = when {
-        !hasCheckIn -> "등교"
-        !hasCheckOut -> "하교"
-        else -> "기록 완료"
+    // 조퇴 확인 다이얼로그
+    if (actionState is ActionState.ConfirmEarlyLeave) {
+        EarlyLeaveConfirmDialog(
+            onConfirm = onConfirmEarlyLeave,
+            onCancel = onCancelEarlyLeave
+        )
     }
 
-    val isButtonEnabled = !hasCheckIn || !hasCheckOut
+    val timeFormatter = SimpleDateFormat("HH:mm:ss", Locale.KOREA)
+    val checkInRecord = todayRecords.find { it.type == AttendanceType.CHECK_IN.name }
+    val checkOutRecord = todayRecords.find { it.type == AttendanceType.CHECK_OUT.name }
+
+    val hasCheckIn = checkInRecord != null
+    val hasCheckOut = checkOutRecord != null
+
+    val isCheckInLoading = actionState is ActionState.Loading && !hasCheckIn
+    val isCheckOutLoading = actionState is ActionState.Loading && hasCheckIn && !hasCheckOut
 
     Column(
         modifier = Modifier
@@ -134,48 +148,23 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // 3. 현재 시간 표시 박스
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(Color(0xFFF0F0F0)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = timeFormatter.format(Date(currentTime)),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Gray
-            )
-        }
+        // 3. 등교 버튼/기록 박스
+        AttendanceActionButton(
+            label = "등교",
+            recordedTime = checkInRecord?.checkedAt?.let { timeFormatter.format(Date(it)) },
+            isEnabled = !hasCheckIn && !isCheckInLoading,
+            onClick = onManualClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. 메인 동작 버튼
-        Button(
-            onClick = {
-                if (!hasCheckIn || !hasCheckOut) {
-                    onManualClick()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp),
-            shape = RoundedCornerShape(30.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isButtonEnabled) Color(0xFF2196F3) else Color.LightGray,
-                contentColor = Color.White
-            ),
-            enabled = isButtonEnabled
-        ) {
-            Text(
-                text = buttonText,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        // 4. 하교 버튼/기록 박스
+        AttendanceActionButton(
+            label = "하교",
+            recordedTime = checkOutRecord?.checkedAt?.let { timeFormatter.format(Date(it)) },
+            isEnabled = hasCheckIn && !hasCheckOut && !isCheckOutLoading,
+            onClick = onManualClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -196,6 +185,107 @@ fun HomeScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
     }
+}
+
+@Composable
+fun AttendanceActionButton(
+    label: String,
+    recordedTime: String?,
+    isEnabled: Boolean,
+    onClick: () -> Unit
+) {
+    val isRecorded = recordedTime != null
+    
+    Button(
+        onClick = { if (isEnabled) onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        shape = RoundedCornerShape(30.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = when {
+                isRecorded -> Color(0xFFF0F0F0) // 기록됨 (회색)
+                isEnabled -> Color(0xFF2196F3) // 누를 수 있음 (파란색)
+                else -> Color(0xFFF0F0F0) // 비활성 (회색)
+            },
+            contentColor = if (isRecorded || !isEnabled) Color.Gray else Color.White
+        ),
+        enabled = isEnabled || isRecorded // 기록된 경우 버튼 형태 유지를 위해 활성화처럼 보이게 함 (클릭은 isEnabled로 제어)
+    ) {
+        Text(
+            text = recordedTime ?: label,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun EarlyLeaveConfirmDialog(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = Color(0xFFFF9800),
+                modifier = Modifier.size(40.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "조퇴 확인",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "아직 하교 시작 시각 전입니다.",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "지금 하교하면 조퇴로 기록됩니다.\n정말 하교 처리하시겠습니까?",
+                    fontSize = 14.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9800)
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            ) {
+                Text("네, 하교하겠습니다", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            ) {
+                Text("아니요, 더 있다 갈게요", color = MaterialTheme.colorScheme.outline)
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp
+    )
 }
 
 @Composable
