@@ -23,12 +23,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +44,7 @@ import com.example.nfc_attendance_app.data.model.AttendanceRecord
 import com.example.nfc_attendance_app.data.model.AttendanceStatus
 import com.example.nfc_attendance_app.data.model.AttendanceType
 import com.example.nfc_attendance_app.domain.AttendancePolicy
+import com.example.nfc_attendance_app.ui.main.AttendancePolicyDialog
 import com.example.nfc_attendance_app.utils.DateTimeFormatter
 
 @Composable
@@ -63,6 +68,12 @@ fun NfcAttendanceScreen(
     onConfirmEarlyLeave: () -> Unit,
     onCancelEarlyLeave: () -> Unit
 ) {
+    var showPolicyDialog by remember { mutableStateOf(false) }
+
+    if (showPolicyDialog) {
+        AttendancePolicyDialog(onDismiss = { showPolicyDialog = false })
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,20 +86,37 @@ fun NfcAttendanceScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp, start = 4.dp),
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = uiState.userName,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "님, 안녕하세요!",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = uiState.userName,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "님, 안녕하세요!",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                    )
+                }
+                
+                IconButton(
+                    onClick = { showPolicyDialog = true },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "출석 정책 정보",
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
 
@@ -365,7 +393,7 @@ fun AttendanceStatus.toColor(): Color {
         AttendanceStatus.PRESENT -> Color(0xFF4CAF50) // 초록색
         AttendanceStatus.LATE -> Color(0xFFFF9800)    // 주황색
         AttendanceStatus.ABSENT -> Color(0xFFF44336)  // 빨간색
-        AttendanceStatus.EARLY_LEAVE -> Color(0xFFFF9800) // 주황색 (지각과 동일하게 처리하거나 필요시 변경)
+        AttendanceStatus.EARLY_LEAVE -> Color(0xFFFF9800) // 주황색
     }
 }
 
