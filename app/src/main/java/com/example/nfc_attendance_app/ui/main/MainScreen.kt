@@ -11,6 +11,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -32,13 +36,29 @@ fun MainScreen(
     attendanceRepository: AttendanceRepository,
     historyRepository: AttendanceHistoryRepository,
     preferences: LocalUserPreferences,
-    onNfcViewModelCreated: (NfcAttendanceViewModel) -> Unit
+    onNfcViewModelCreated: (NfcAttendanceViewModel) -> Unit,
+    externalTabRequest: BottomNavItem? = null,
+    onTabRequestConsumed: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val items = listOf(
         BottomNavItem.Attendance,
         BottomNavItem.History
     )
+
+    // 외부(NFC 인식 등)에서 탭 전환 요청이 있을 경우 처리
+    LaunchedEffect(externalTabRequest) {
+        externalTabRequest?.let { item ->
+            navController.navigate(item.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+            onTabRequestConsumed()
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -69,22 +89,25 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
+        // ViewModel들을 NavHost 밖에서 생성하여 탭 전환 시에도 상태 유지 및 공유
+        val historyViewModel: AttendanceHistoryViewModel = viewModel {
+            AttendanceHistoryViewModel(historyRepository, preferences)
+        }
+        
+        val nfcViewModel: NfcAttendanceViewModel = viewModel {
+            NfcAttendanceViewModel(attendanceRepository, preferences)
+        }
+        onNfcViewModelCreated(nfcViewModel)
+
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Attendance.route,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(BottomNavItem.Attendance.route) {
-                val nfcViewModel: NfcAttendanceViewModel = viewModel {
-                    NfcAttendanceViewModel(attendanceRepository, preferences)
-                }
-                onNfcViewModelCreated(nfcViewModel)
                 NfcAttendanceRoute(viewModel = nfcViewModel)
             }
             composable(BottomNavItem.History.route) {
-                val historyViewModel: AttendanceHistoryViewModel = viewModel {
-                    AttendanceHistoryViewModel(historyRepository, preferences)
-                }
                 AttendanceHistoryRoute(viewModel = historyViewModel)
             }
         }
