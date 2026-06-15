@@ -37,6 +37,14 @@ class NfcAttendanceViewModel(
     }
 
     fun onNfcTagDetected(tagId: String) {
+        processAttendance(tagId)
+    }
+
+    fun onManualAttendanceClick() {
+        processAttendance("MANUAL")
+    }
+
+    private fun processAttendance(tagId: String) {
         // 중복 태깅 방지: 로딩 중이거나 조퇴 확인 대기 중이면 무시
         if (_uiState.value.actionState is ActionState.Loading) return
         if (_uiState.value.actionState is ActionState.ConfirmEarlyLeave) return
@@ -91,6 +99,10 @@ class NfcAttendanceViewModel(
                 }
             }
         }
+    }
+
+    fun refresh() {
+        loadTodayRecords()
     }
 
     fun confirmEarlyLeave() {

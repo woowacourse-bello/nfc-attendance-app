@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material3.AlertDialog
@@ -48,6 +49,7 @@ import com.example.nfc_attendance_app.data.AttendanceRepository
 import com.example.nfc_attendance_app.data.LocalUserPreferences
 import com.example.nfc_attendance_app.ui.history.AttendanceHistoryRoute
 import com.example.nfc_attendance_app.ui.history.AttendanceHistoryViewModel
+import com.example.nfc_attendance_app.ui.home.HomeRoute
 import com.example.nfc_attendance_app.ui.nfc.NfcAttendanceRoute
 import com.example.nfc_attendance_app.ui.nfc.NfcAttendanceViewModel
 
@@ -62,6 +64,7 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     val items = listOf(
+        BottomNavItem.Home,
         BottomNavItem.Attendance,
         BottomNavItem.History
     )
@@ -89,7 +92,11 @@ fun MainScreen(
                     NavigationBarItem(
                         icon = {
                             Icon(
-                                imageVector = if (item == BottomNavItem.Attendance) Icons.Default.Nfc else Icons.Default.History,
+                                imageVector = when (item) {
+                                    BottomNavItem.Home -> Icons.Default.Home
+                                    BottomNavItem.Attendance -> Icons.Default.Nfc
+                                    BottomNavItem.History -> Icons.Default.History
+                                },
                                 contentDescription = item.label
                             )
                         },
@@ -121,9 +128,12 @@ fun MainScreen(
 
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Attendance.route,
+            startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(BottomNavItem.Home.route) {
+                HomeRoute(viewModel = nfcViewModel)
+            }
             composable(BottomNavItem.Attendance.route) {
                 NfcAttendanceRoute(viewModel = nfcViewModel)
             }

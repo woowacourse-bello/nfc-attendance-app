@@ -24,25 +24,25 @@ class RealtimeAttendanceRepository(
         tagId: String
     ): AttendanceActionResult {
         try {
-            // 1. NFC 태그 유효성 검사
-            val tagSnapshot = database.reference
-                .child("nfcTags")
-                .child(tagId)
-                .get()
-                .await()
+            // 1. NFC 태그 유효성 검사 (수동 기록인 경우 건너뜀)
+            if (tagId != "MANUAL") {
+                val tagSnapshot = database.reference
+                    .child("nfcTags")
+                    .child(tagId)
+                    .get()
+                    .await()
 
-            if (!tagSnapshot.exists()) {
-                throw Exception("등록되지 않은 NFC 태그입니다.")
+                if (!tagSnapshot.exists()) {
+                    throw Exception("등록되지 않은 NFC 태그입니다.")
+                }
+
+                val tagInfo = tagSnapshot.getValue(NfcTagInfo::class.java)
+                    ?: throw Exception("등교/하교 처리에 실패했습니다.")
+
+                if (!tagInfo.isActive) {
+                    throw Exception("비활성화된 NFC 태그입니다.")
+                }
             }
-
-            val tagInfo = tagSnapshot.getValue(NfcTagInfo::class.java)
-                ?: throw Exception("등교/하교 처리에 실패했습니다.")
-
-            if (!tagInfo.isActive) {
-                throw Exception("비활성화된 NFC 태그입니다.")
-            }
-
-            // 2. 현재 시각 생성 및 정책 확인
             val currentTime = System.currentTimeMillis()
             
             if (policy.isRecordRestricted(currentTime)) {
