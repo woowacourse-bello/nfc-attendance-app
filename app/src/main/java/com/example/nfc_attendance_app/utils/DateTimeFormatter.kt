@@ -6,12 +6,12 @@ import java.util.Locale
 
 object DateTimeFormatter {
     fun formatCheckedAt(timestamp: Long): String {
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA)
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.KOREA)
         return formatter.format(Date(timestamp))
     }
 
     fun formatToTime(timestamp: Long): String {
-        val formatter = SimpleDateFormat("HH:mm", Locale.KOREA)
+        val formatter = SimpleDateFormat("HH:mm:ss", Locale.KOREA)
         return formatter.format(Date(timestamp))
     }
 

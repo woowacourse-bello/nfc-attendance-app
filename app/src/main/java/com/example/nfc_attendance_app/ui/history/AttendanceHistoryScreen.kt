@@ -309,14 +309,14 @@ fun HistoryTableHeader() {
     ) {
         Text(
             text = "날짜",
-            modifier = Modifier.weight(1.2f),
+            modifier = Modifier.weight(1.1f),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = "등교 ~ 하교",
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(2.5f),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -324,7 +324,7 @@ fun HistoryTableHeader() {
         )
         Text(
             text = "상태",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(0.8f),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             textAlign = androidx.compose.ui.text.style.TextAlign.End,
@@ -355,20 +355,22 @@ fun HistoryTableRow(date: String, records: List<AttendanceRecord>) {
         // 1. 날짜
         Text(
             text = displayDate,
-            modifier = Modifier.weight(1.2f),
+            modifier = Modifier.weight(1.1f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
 
         // 2. 등교 ~ 하교 시간
         Row(
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(2.5f),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = checkIn?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--",
+                text = checkIn?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--:--",
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
                 color = if (checkIn != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
             Text(
@@ -377,15 +379,17 @@ fun HistoryTableRow(date: String, records: List<AttendanceRecord>) {
                 color = MaterialTheme.colorScheme.outline
             )
             Text(
-                text = checkOut?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--",
+                text = checkOut?.let { DateTimeFormatter.formatToTime(it.checkedAt) } ?: "--:--:--",
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Start,
                 color = if (checkOut != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
         }
 
         // 3. 최종 상태
         Box(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(0.8f),
             contentAlignment = Alignment.CenterEnd
         ) {
             dailyStatus?.let {
