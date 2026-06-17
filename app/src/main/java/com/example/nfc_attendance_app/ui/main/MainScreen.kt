@@ -202,8 +202,8 @@ fun AttendancePolicyDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 PolicyItem("하교 가능", "18:00 ~", MaterialTheme.colorScheme.primary)
-                PolicyItem("기록 제한", "23:01 ~", MaterialTheme.colorScheme.outline)
-                
+                PolicyItem("기록 제한", "21:01 ~", MaterialTheme.colorScheme.outline)
+
                 Spacer(modifier = Modifier.height(20.dp))
                 Box(
                     modifier = Modifier
@@ -213,7 +213,7 @@ fun AttendancePolicyDialog(onDismiss: () -> Unit) {
                         .padding(12.dp)
                 ) {
                     Text(
-                        text = "• 등교 후 하교 태그 없이 하루가 지나면 '조퇴'로 기록됩니다. (결석자 제외)",
+                        text = "• 등교 후 21:01까지 하교 태그가 없으면 '조퇴'로 기록됩니다. (결석자 제외)",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp

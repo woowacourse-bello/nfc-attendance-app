@@ -19,4 +19,9 @@ object DateTimeFormatter {
         val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
         return formatter.format(Date(timestamp))
     }
+
+    fun getTodayDate(): String {
+        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+        return formatter.format(Date())
+    }
 }

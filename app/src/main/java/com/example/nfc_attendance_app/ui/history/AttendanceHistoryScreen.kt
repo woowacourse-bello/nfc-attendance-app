@@ -177,13 +177,20 @@ fun calculateStats(groupedRecords: Map<String, List<AttendanceRecord>>, policy: 
     var absent = 0
     var points = 0
 
-    groupedRecords.values.forEach { records ->
+    val todayDate = DateTimeFormatter.getTodayDate()
+
+    groupedRecords.forEach { (date, records) ->
         val checkIn = records.find { it.type == AttendanceType.CHECK_IN.name }
         val checkOut = records.find { it.type == AttendanceType.CHECK_OUT.name }
 
         val checkInStatus = checkIn?.status?.let { try { AttendanceStatus.valueOf(it) } catch(e: Exception) { null } }
         val checkOutStatus = checkOut?.status?.let { try { AttendanceStatus.valueOf(it) } catch(e: Exception) { null } }
-        val dailyStatus = policy.calculateDailyStatus(checkInStatus, checkOutStatus)
+        val dailyStatus = policy.calculateDailyStatus(
+            checkInStatus = checkInStatus, 
+            checkOutStatus = checkOutStatus, 
+            isCheckOutMissing = checkOut == null,
+            isToday = date == todayDate
+        )
 
         when (dailyStatus) {
             AttendanceStatus.PRESENT -> normal++
@@ -336,12 +343,18 @@ fun HistoryTableHeader() {
 @Composable
 fun HistoryTableRow(date: String, records: List<AttendanceRecord>) {
     val policy = remember { AttendancePolicy() }
+    val todayDate = remember { DateTimeFormatter.getTodayDate() }
     val checkIn = records.find { it.type == AttendanceType.CHECK_IN.name }
     val checkOut = records.find { it.type == AttendanceType.CHECK_OUT.name }
 
     val checkInStatus = checkIn?.status?.let { try { AttendanceStatus.valueOf(it) } catch(e: Exception) { null } }
     val checkOutStatus = checkOut?.status?.let { try { AttendanceStatus.valueOf(it) } catch(e: Exception) { null } }
-    val dailyStatus = policy.calculateDailyStatus(checkInStatus, checkOutStatus)
+    val dailyStatus = policy.calculateDailyStatus(
+        checkInStatus = checkInStatus, 
+        checkOutStatus = checkOutStatus, 
+        isCheckOutMissing = checkOut == null,
+        isToday = date == todayDate
+    )
 
     // 날짜 포맷 변경 (2026-06-12 -> 2026.06.12)
     val displayDate = date.replace("-", ".")

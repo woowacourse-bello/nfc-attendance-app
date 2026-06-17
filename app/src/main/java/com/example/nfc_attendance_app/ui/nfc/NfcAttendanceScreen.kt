@@ -294,7 +294,12 @@ fun TodayStatusSection(records: List<AttendanceRecord>) {
     val checkInStatus = checkIn?.status?.let { AttendanceStatus.valueOf(it) }
     val checkOutStatus = checkOut?.status?.let { AttendanceStatus.valueOf(it) }
     
-    val dailyStatus = policy.calculateDailyStatus(checkInStatus, checkOutStatus)
+    val dailyStatus = policy.calculateDailyStatus(
+        checkInStatus = checkInStatus, 
+        checkOutStatus = checkOutStatus, 
+        isCheckOutMissing = checkOut == null,
+        isToday = true
+    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
